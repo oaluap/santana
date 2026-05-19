@@ -287,6 +287,7 @@ async function loadGeoJSON() {
   const bounds = geoLayer.getBounds();
   if (bounds && bounds.isValid()) map.fitBounds(bounds.pad(0.1));
   setStatus("Clique em um ponto para ver os atributos.");
+  requestAnimationFrame(() => window.relayoutPanels?.());
 }
 
 function escapeHtml(str) {
@@ -396,15 +397,78 @@ function savePanelLayout() {
   localStorage.setItem(PANEL_STORAGE_KEY, JSON.stringify(data));
 }
 
-function applyDefaultLayout() {
+function syncTopbarOffset() {
+  const topbar = document.querySelector(".topbar");
+  if (!topbar) return;
+  const h = Math.ceil(topbar.getBoundingClientRect().height);
+  document.documentElement.style.setProperty("--topbar-h", `${h}px`);
+  map?.invalidateSize?.();
+}
+
+function panelSize(panelId) {
+  const el = panelEls[panelId];
+  if (!el) return { w: 0, h: 0 };
+  const r = el.getBoundingClientRect();
+  return { w: r.width || el.offsetWidth, h: r.height || el.offsetHeight };
+}
+
+function ensurePanelInView(panelId) {
+  const el = panelEls[panelId];
+  if (!el || !mainEl) return;
+  const { w: ew, h: eh } = panelSize(panelId);
+  const pos = readPanelPos(panelId);
+  const maxW = mainEl.clientWidth;
+  const maxH = mainEl.clientHeight;
+  setPanelPx(
+    panelId,
+    clamp(pos.left, 0, Math.max(0, maxW - ew)),
+    clamp(pos.top, 0, Math.max(0, maxH - eh)),
+  );
+}
+
+function ensureAllPanelsInView() {
+  ensurePanelInView("zona");
+  ensurePanelInView("municipio");
+}
+
+function applyResponsiveDefaultLayout() {
   const mun = panelEls.municipio;
   const zona = panelEls.zona;
   if (!mun || !zona || !mainEl) return;
-  const mh = mainEl.clientHeight;
-  const munTop = mh - mun.offsetHeight - PANEL_PAD;
-  const zonaTop = munTop - zona.offsetHeight - PANEL_GAP;
-  setPanelPx("municipio", PANEL_PAD, munTop);
-  setPanelPx("zona", PANEL_PAD, zonaTop);
+
+  syncTopbarOffset();
+
+  const pad = PANEL_PAD;
+  const gap = PANEL_GAP;
+  const areaW = mainEl.clientWidth;
+  const areaH = mainEl.clientHeight;
+  const zonaSize = panelSize("zona");
+  const munSize = panelSize("municipio");
+  const stackH = zonaSize.h + gap + munSize.h;
+  const rowW = zonaSize.w + gap + munSize.w;
+  const fitsRow = rowW + pad * 2 <= areaW;
+  const fitsStack = stackH + pad * 2 <= areaH;
+  const preferRow = areaW >= 520 && fitsRow && (!fitsStack || areaW >= 900);
+
+  if (preferRow) {
+    const bottom = areaH - Math.max(zonaSize.h, munSize.h) - pad;
+    setPanelPx("zona", pad, bottom);
+    setPanelPx("municipio", pad + zonaSize.w + gap, bottom);
+  } else if (fitsStack) {
+    const munTop = areaH - munSize.h - pad;
+    setPanelPx("municipio", pad, munTop);
+    setPanelPx("zona", pad, munTop - zonaSize.h - gap);
+  } else {
+    const zonaTop = pad;
+    setPanelPx("zona", pad, zonaTop);
+    setPanelPx("municipio", pad, Math.min(areaH - munSize.h - pad, zonaTop + zonaSize.h + gap));
+  }
+
+  ensureAllPanelsInView();
+}
+
+function applyDefaultLayout() {
+  applyResponsiveDefaultLayout();
 }
 
 function applyZonaAboveMunicipio() {
@@ -412,7 +476,9 @@ function applyZonaAboveMunicipio() {
   const mun = panelEls.municipio;
   if (!zona || !mun) return;
   const { left, top } = readPanelPos("municipio");
-  setPanelPx("zona", left, top - zona.offsetHeight - PANEL_GAP);
+  const { h: zh } = panelSize("zona");
+  setPanelPx("zona", left, top - zh - PANEL_GAP);
+  ensurePanelInView("zona");
 }
 
 function applyCorner(panelId, corner) {
@@ -427,6 +493,7 @@ function applyCorner(panelId, corner) {
   if (corner.includes("r")) left = w - ew - PANEL_PAD;
   if (corner.includes("b")) top = h - eh - PANEL_PAD;
   setPanelPx(panelId, left, top);
+  ensurePanelInView(panelId);
 }
 
 function bothDefault() {
@@ -460,6 +527,7 @@ function onPresetChange(panelId) {
   if (panelId === "municipio" && posSelects.zona?.value === "default" && posSelects.municipio?.value !== "default") {
     applyZonaAboveMunicipio();
   }
+  ensureAllPanelsInView();
   savePanelLayout();
 }
 
@@ -500,57 +568,88 @@ function enablePanelDrag(panelId) {
   });
 }
 
+function relayoutPanels() {
+  if (!mainEl || !panelEls.zona || !panelEls.municipio) return;
+  syncTopbarOffset();
+
+  if (bothDefault()) {
+    applyResponsiveDefaultLayout();
+    return;
+  }
+
+  for (const id of ["municipio", "zona"]) {
+    const preset = posSelects[id]?.value;
+    if (preset && preset !== "default" && preset !== "custom") applyCorner(id, preset);
+    else if (preset === "custom") ensurePanelInView(id);
+  }
+  if (posSelects.zona?.value === "default") applyZonaAboveMunicipio();
+  ensureAllPanelsInView();
+}
+
+function showPanelsReady() {
+  panelEls.zona?.classList.add("sum-box--ready");
+  panelEls.municipio?.classList.add("sum-box--ready");
+}
+
 function initPanelLayout() {
   if (!mainEl || !panelEls.zona || !panelEls.municipio) return;
 
+  panelEls.zona.classList.remove("sum-box--ready");
+  panelEls.municipio.classList.remove("sum-box--ready");
+
   const saved = getSavedLayout();
-  applyDefaultLayout();
 
   for (const id of ["zona", "municipio"]) {
     const cfg = saved[id];
     if (cfg?.preset && posSelects[id]) posSelects[id].value = cfg.preset;
-    if (cfg?.x != null && cfg?.y != null && cfg.preset === "custom") {
+    if (cfg?.preset === "custom" && cfg?.x != null && cfg?.y != null) {
       setPanelPx(id, cfg.x, cfg.y);
     }
   }
 
-  if (bothDefault()) {
-    applyDefaultLayout();
-  } else {
-    for (const id of ["municipio", "zona"]) {
-      const preset = posSelects[id]?.value;
-      if (preset === "custom" && saved[id]?.x != null) setPanelPx(id, saved[id].x, saved[id].y);
-      else if (preset && preset !== "default") applyCorner(id, preset);
+  const applyInitial = () => {
+    syncTopbarOffset();
+    if (bothDefault()) {
+      applyResponsiveDefaultLayout();
+    } else {
+      for (const id of ["municipio", "zona"]) {
+        const preset = posSelects[id]?.value;
+        if (preset === "custom" && saved[id]?.x != null) {
+          setPanelPx(id, saved[id].x, saved[id].y);
+          ensurePanelInView(id);
+        } else if (preset && preset !== "default") applyCorner(id, preset);
+      }
+      if (posSelects.zona?.value === "default") applyZonaAboveMunicipio();
+      ensureAllPanelsInView();
     }
-    if (posSelects.zona?.value === "default") applyZonaAboveMunicipio();
-  }
+    showPanelsReady();
+  };
+
+  requestAnimationFrame(() => requestAnimationFrame(applyInitial));
 
   posSelects.zona?.addEventListener("change", () => onPresetChange("zona"));
   posSelects.municipio?.addEventListener("change", () => onPresetChange("municipio"));
   enablePanelDrag("zona");
   enablePanelDrag("municipio");
 
+  let resizeTimer;
   window.addEventListener("resize", () => {
-    if (bothDefault()) applyDefaultLayout();
-    else {
-      for (const id of ["zona", "municipio"]) {
-        const preset = posSelects[id]?.value;
-        if (preset && preset !== "default" && preset !== "custom") applyCorner(id, preset);
-        else if (preset === "custom") {
-          const pos = readPanelPos(id);
-          setPanelPx(
-            id,
-            clamp(pos.left, 0, mainEl.clientWidth - panelEls[id].offsetWidth),
-            clamp(pos.top, 0, mainEl.clientHeight - panelEls[id].offsetHeight),
-          );
-        }
-      }
-      if (posSelects.zona?.value === "default" && posSelects.municipio?.value !== "default") {
-        applyZonaAboveMunicipio();
-      }
-    }
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(relayoutPanels, 100);
   });
+
+  const topbar = document.querySelector(".topbar");
+  if (topbar && typeof ResizeObserver !== "undefined") {
+    new ResizeObserver(() => relayoutPanels()).observe(topbar);
+  }
+  if (typeof ResizeObserver !== "undefined") {
+    new ResizeObserver(() => {
+      if (bothDefault()) applyResponsiveDefaultLayout();
+    }).observe(mainEl);
+  }
 }
+
+window.relayoutPanels = relayoutPanels;
 
 initPanelLayout();
 loadGeoJSON().catch((e) => console.warn(e));
