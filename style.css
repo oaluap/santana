@@ -73,6 +73,10 @@ body {
   color: var(--text);
 }
 
+.search__input--wide {
+  width: 240px;
+}
+
 .search__input::placeholder {
   color: rgba(229, 231, 235, 0.55);
 }
@@ -101,12 +105,79 @@ body {
 }
 
 .main {
+  position: relative;
   height: 100%;
-  padding-top: 48px;
+  padding-top: 56px;
+}
+
+.sum-panels {
+  position: absolute;
+  left: 12px;
+  bottom: 24px;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+}
+
+.sum-box {
+  min-width: 168px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+}
+
+.sum-box__title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.sum-box__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sum-box__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sum-box__label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sum-box__value {
+  font-size: 20px;
+  font-weight: 800;
+  color: #f59e0b;
+  font-variant-numeric: tabular-nums;
+}
+
+#sumBoxMunicipio .sum-box__value {
+  color: #38bdf8;
+}
+
+.sum-box__meta {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--muted);
 }
 
 .map {
-  height: calc(100vh - 48px);
+  height: calc(100vh - 56px);
   width: 100%;
 }
 
@@ -127,7 +198,24 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.10) !important;
 }
 
-/* Tooltip com tabela de atributos */
+/* Popup com tabela de atributos (clique) */
+.attr-popup .leaflet-popup-content-wrapper,
+.attr-popup .leaflet-popup-tip {
+  background: rgba(15, 23, 42, 0.96) !important;
+  color: var(--text) !important;
+}
+
+.attr-popup .leaflet-popup-content-wrapper {
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+}
+
+.attr-popup .leaflet-popup-close-button {
+  color: var(--text) !important;
+}
+
+/* Mantém estilos de tabela reutilizados */
 .attr-tooltip {
   background: rgba(15, 23, 42, 0.96) !important;
   color: var(--text) !important;
