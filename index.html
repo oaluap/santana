@@ -50,58 +50,87 @@
           <button class="search__btn" type="submit">Buscar</button>
           <button id="municipioClear" class="search__btn search__btn--ghost" type="button">Limpar</button>
         </form>
+        <div class="panel-layout" aria-label="Posição dos painéis na tela">
+          <span class="panel-layout__label">Painéis:</span>
+          <label class="panel-layout__item">
+            <span class="panel-layout__name">Zona</span>
+            <select id="posZona" class="panel-layout__select" title="Posição do painel Zona">
+              <option value="default">Padrão</option>
+              <option value="tl">Superior esquerdo</option>
+              <option value="tr">Superior direito</option>
+              <option value="bl">Inferior esquerdo</option>
+              <option value="br">Inferior direito</option>
+              <option value="custom" hidden>Personalizado</option>
+            </select>
+          </label>
+          <label class="panel-layout__item">
+            <span class="panel-layout__name">Município</span>
+            <select id="posMunicipio" class="panel-layout__select" title="Posição do painel Município">
+              <option value="default">Padrão</option>
+              <option value="tl">Superior esquerdo</option>
+              <option value="tr">Superior direito</option>
+              <option value="bl">Inferior esquerdo</option>
+              <option value="br">Inferior direito</option>
+              <option value="custom" hidden>Personalizado</option>
+            </select>
+          </label>
+        </div>
         <div id="zonaStatus" class="topbar__hint">Passe o mouse para ver os atributos.</div>
       </div>
     </header>
 
     <main class="main">
       <div id="map" class="map" aria-label="Mapa interativo"></div>
-      <div class="sum-panels">
-        <aside id="sumBoxZona" class="sum-box" aria-live="polite">
-          <div class="sum-box__title">Zona</div>
-          <div class="sum-box__rows">
-            <div class="sum-box__row">
-              <span class="sum-box__label">1998</span>
-              <span id="sumZona1998" class="sum-box__value">—</span>
-            </div>
-            <div class="sum-box__row">
-              <span class="sum-box__label">2002</span>
-              <span id="sumZona2002" class="sum-box__value">—</span>
-            </div>
-            <div class="sum-box__row">
-              <span class="sum-box__label">2006</span>
-              <span id="sumZona2006" class="sum-box__value">—</span>
-            </div>
-            <div class="sum-box__row">
-              <span class="sum-box__label">2010</span>
-              <span id="sumZona2010" class="sum-box__value">—</span>
-            </div>
+      <aside id="sumBoxZona" class="sum-box sum-box--float" data-panel="zona" aria-live="polite">
+        <div class="sum-box__head" title="Arraste para mover">
+          <span class="sum-box__title">Zona</span>
+          <span class="sum-box__grip" aria-hidden="true">⠿</span>
+        </div>
+        <div class="sum-box__rows">
+          <div class="sum-box__row">
+            <span class="sum-box__label">1998</span>
+            <span id="sumZona1998" class="sum-box__value">—</span>
           </div>
-          <div id="sumBoxZonaMeta" class="sum-box__meta">Filtre por Zona para calcular.</div>
-        </aside>
-        <aside id="sumBoxMunicipio" class="sum-box" aria-live="polite">
-          <div class="sum-box__title">Município</div>
-          <div class="sum-box__rows">
-            <div class="sum-box__row">
-              <span class="sum-box__label">1998</span>
-              <span id="sumMun1998" class="sum-box__value">—</span>
-            </div>
-            <div class="sum-box__row">
-              <span class="sum-box__label">2002</span>
-              <span id="sumMun2002" class="sum-box__value">—</span>
-            </div>
-            <div class="sum-box__row">
-              <span class="sum-box__label">2006</span>
-              <span id="sumMun2006" class="sum-box__value">—</span>
-            </div>
-            <div class="sum-box__row">
-              <span class="sum-box__label">2010</span>
-              <span id="sumMun2010" class="sum-box__value">—</span>
-            </div>
+          <div class="sum-box__row">
+            <span class="sum-box__label">2002</span>
+            <span id="sumZona2002" class="sum-box__value">—</span>
           </div>
-          <div id="sumBoxMunMeta" class="sum-box__meta">Filtre por Município para calcular.</div>
-        </aside>
-      </div>
+          <div class="sum-box__row">
+            <span class="sum-box__label">2006</span>
+            <span id="sumZona2006" class="sum-box__value">—</span>
+          </div>
+          <div class="sum-box__row">
+            <span class="sum-box__label">2010</span>
+            <span id="sumZona2010" class="sum-box__value">—</span>
+          </div>
+        </div>
+        <div id="sumBoxZonaMeta" class="sum-box__meta">Filtre por Zona para calcular.</div>
+      </aside>
+      <aside id="sumBoxMunicipio" class="sum-box sum-box--float" data-panel="municipio" aria-live="polite">
+        <div class="sum-box__head" title="Arraste para mover">
+          <span class="sum-box__title">Município</span>
+          <span class="sum-box__grip" aria-hidden="true">⠿</span>
+        </div>
+        <div class="sum-box__rows">
+          <div class="sum-box__row">
+            <span class="sum-box__label">1998</span>
+            <span id="sumMun1998" class="sum-box__value">—</span>
+          </div>
+          <div class="sum-box__row">
+            <span class="sum-box__label">2002</span>
+            <span id="sumMun2002" class="sum-box__value">—</span>
+          </div>
+          <div class="sum-box__row">
+            <span class="sum-box__label">2006</span>
+            <span id="sumMun2006" class="sum-box__value">—</span>
+          </div>
+          <div class="sum-box__row">
+            <span class="sum-box__label">2010</span>
+            <span id="sumMun2010" class="sum-box__value">—</span>
+          </div>
+        </div>
+        <div id="sumBoxMunMeta" class="sum-box__meta">Filtre por Município para calcular.</div>
+      </aside>
     </main>
 
     <script
