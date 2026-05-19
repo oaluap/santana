@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WebGIS - Leaflet (3 basemaps)</title>
+    <script>
+      (function () {
+        const path = location.pathname;
+        const m = path.match(/^(.*\/santana)\/?/);
+        const base = m ? m[1] + "/" : path.endsWith("/") ? path : path.replace(/\/[^/]*$/, "/") || "/";
+        const el = document.createElement("base");
+        el.href = base;
+        document.head.appendChild(el);
+        window.__APP_BASE__ = base;
+        if (m && !path.endsWith("/") && !path.endsWith(".html")) {
+          location.replace(base + location.search + location.hash);
+        }
+      })();
+    </script>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar__title">WebGIS (Leaflet)</div>
+      <div class="topbar__tools">
+        <form id="zonaForm" class="search" autocomplete="off">
+          <label class="search__label" for="zonaInput">Zona:</label>
+          <input id="zonaInput" class="search__input" type="text" list="zonaList" placeholder="Ex.: 4" />
+          <datalist id="zonaList"></datalist>
+          <button class="search__btn" type="submit">Buscar</button>
+          <button id="zonaClear" class="search__btn search__btn--ghost" type="button">Limpar</button>
+        </form>
+        <form id="municipioForm" class="search" autocomplete="off">
+          <label class="search__label" for="municipioInput">Município:</label>
+          <input
+            id="municipioInput"
+            class="search__input search__input--wide"
+            type="text"
+            list="municipioList"
+            placeholder="Ex.: RIO DE JANEIRO"
+          />
+          <datalist id="municipioList"></datalist>
+          <button class="search__btn" type="submit">Buscar</button>
+          <button id="municipioClear" class="search__btn search__btn--ghost" type="button">Limpar</button>
+        </form>
+        <div id="zonaStatus" class="topbar__hint">Passe o mouse para ver os atributos.</div>
+      </div>
+    </header>
+
+    <main class="main">
+      <div id="map" class="map" aria-label="Mapa interativo"></div>
+      <div class="sum-panels">
+        <aside id="sumBoxZona" class="sum-box" aria-live="polite">
+          <div class="sum-box__title">Zona</div>
+          <div class="sum-box__rows">
+            <div class="sum-box__row">
+              <span class="sum-box__label">1998</span>
+              <span id="sumZona1998" class="sum-box__value">—</span>
+            </div>
+            <div class="sum-box__row">
+              <span class="sum-box__label">2002</span>
+              <span id="sumZona2002" class="sum-box__value">—</span>
+            </div>
+            <div class="sum-box__row">
+              <span class="sum-box__label">2006</span>
+              <span id="sumZona2006" class="sum-box__value">—</span>
+            </div>
+            <div class="sum-box__row">
+              <span class="sum-box__label">2010</span>
+              <span id="sumZona2010" class="sum-box__value">—</span>
+            </div>
+          </div>
+          <div id="sumBoxZonaMeta" class="sum-box__meta">Filtre por Zona para calcular.</div>
+        </aside>
+        <aside id="sumBoxMunicipio" class="sum-box" aria-live="polite">
+          <div class="sum-box__title">Município</div>
+          <div class="sum-box__rows">
+            <div class="sum-box__row">
+              <span class="sum-box__label">1998</span>
+              <span id="sumMun1998" class="sum-box__value">—</span>
+            </div>
+            <div class="sum-box__row">
+              <span class="sum-box__label">2002</span>
+              <span id="sumMun2002" class="sum-box__value">—</span>
+            </div>
+            <div class="sum-box__row">
+              <span class="sum-box__label">2006</span>
+              <span id="sumMun2006" class="sum-box__value">—</span>
+            </div>
+            <div class="sum-box__row">
+              <span class="sum-box__label">2010</span>
+              <span id="sumMun2010" class="sum-box__value">—</span>
+            </div>
+          </div>
+          <div id="sumBoxMunMeta" class="sum-box__meta">Filtre por Município para calcular.</div>
+        </aside>
+      </div>
+    </main>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="./main.js"></script>
+  </body>
+</html>
