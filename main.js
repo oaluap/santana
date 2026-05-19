@@ -341,4 +341,216 @@ municipioClearBtn?.addEventListener("click", () => {
   applyFilters();
 });
 
+// Posição dos painéis (arrastar + presets)
+const PANEL_STORAGE_KEY = "santana-panel-layout";
+const mainEl = document.querySelector(".main");
+const panelEls = {
+  zona: document.getElementById("sumBoxZona"),
+  municipio: document.getElementById("sumBoxMunicipio"),
+};
+const posSelects = {
+  zona: document.getElementById("posZona"),
+  municipio: document.getElementById("posMunicipio"),
+};
+const PANEL_PAD = 12;
+const PANEL_GAP = 10;
+
+function clamp(n, min, max) {
+  return Math.min(Math.max(n, min), max);
+}
+
+function setPanelPx(panelId, left, top) {
+  const el = panelEls[panelId];
+  if (!el || !mainEl) return;
+  el.style.left = `${left}px`;
+  el.style.top = `${top}px`;
+}
+
+function readPanelPos(panelId) {
+  const el = panelEls[panelId];
+  if (!el) return { left: PANEL_PAD, top: PANEL_PAD };
+  return {
+    left: parseFloat(el.style.left) || PANEL_PAD,
+    top: parseFloat(el.style.top) || PANEL_PAD,
+  };
+}
+
+function getSavedLayout() {
+  try {
+    return JSON.parse(localStorage.getItem(PANEL_STORAGE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function savePanelLayout() {
+  const data = {};
+  for (const id of ["zona", "municipio"]) {
+    const pos = readPanelPos(id);
+    data[id] = {
+      preset: posSelects[id]?.value || "default",
+      x: Math.round(pos.left),
+      y: Math.round(pos.top),
+    };
+  }
+  localStorage.setItem(PANEL_STORAGE_KEY, JSON.stringify(data));
+}
+
+function applyDefaultLayout() {
+  const mun = panelEls.municipio;
+  const zona = panelEls.zona;
+  if (!mun || !zona || !mainEl) return;
+  const mh = mainEl.clientHeight;
+  const munTop = mh - mun.offsetHeight - PANEL_PAD;
+  const zonaTop = munTop - zona.offsetHeight - PANEL_GAP;
+  setPanelPx("municipio", PANEL_PAD, munTop);
+  setPanelPx("zona", PANEL_PAD, zonaTop);
+}
+
+function applyZonaAboveMunicipio() {
+  const zona = panelEls.zona;
+  const mun = panelEls.municipio;
+  if (!zona || !mun) return;
+  const { left, top } = readPanelPos("municipio");
+  setPanelPx("zona", left, top - zona.offsetHeight - PANEL_GAP);
+}
+
+function applyCorner(panelId, corner) {
+  const el = panelEls[panelId];
+  if (!el || !mainEl) return;
+  const w = mainEl.clientWidth;
+  const h = mainEl.clientHeight;
+  const ew = el.offsetWidth;
+  const eh = el.offsetHeight;
+  let left = PANEL_PAD;
+  let top = PANEL_PAD;
+  if (corner.includes("r")) left = w - ew - PANEL_PAD;
+  if (corner.includes("b")) top = h - eh - PANEL_PAD;
+  setPanelPx(panelId, left, top);
+}
+
+function bothDefault() {
+  return posSelects.zona?.value === "default" && posSelects.municipio?.value === "default";
+}
+
+function applyPreset(panelId) {
+  const preset = posSelects[panelId]?.value;
+  if (!preset || preset === "custom") return;
+
+  if (preset === "default") {
+    if (bothDefault()) applyDefaultLayout();
+    else if (panelId === "zona") applyZonaAboveMunicipio();
+    else applyCorner("municipio", "bl");
+    return;
+  }
+
+  applyCorner(panelId, preset);
+}
+
+function setCustomPreset(panelId) {
+  const sel = posSelects[panelId];
+  if (!sel) return;
+  const custom = sel.querySelector('option[value="custom"]');
+  if (custom) custom.hidden = false;
+  sel.value = "custom";
+}
+
+function onPresetChange(panelId) {
+  applyPreset(panelId);
+  if (panelId === "municipio" && posSelects.zona?.value === "default" && posSelects.municipio?.value !== "default") {
+    applyZonaAboveMunicipio();
+  }
+  savePanelLayout();
+}
+
+function enablePanelDrag(panelId) {
+  const el = panelEls[panelId];
+  const head = el?.querySelector(".sum-box__head");
+  if (!el || !head || !mainEl) return;
+
+  head.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const mainRect = mainEl.getBoundingClientRect();
+    const start = readPanelPos(panelId);
+    const offsetX = e.clientX - mainRect.left - start.left;
+    const offsetY = e.clientY - mainRect.top - start.top;
+
+    el.classList.add("sum-box--dragging");
+    head.setPointerCapture(e.pointerId);
+
+    const onMove = (ev) => {
+      const left = clamp(ev.clientX - mainRect.left - offsetX, 0, mainEl.clientWidth - el.offsetWidth);
+      const top = clamp(ev.clientY - mainRect.top - offsetY, 0, mainEl.clientHeight - el.offsetHeight);
+      setPanelPx(panelId, left, top);
+    };
+
+    const onUp = () => {
+      el.classList.remove("sum-box--dragging");
+      head.removeEventListener("pointermove", onMove);
+      head.removeEventListener("pointerup", onUp);
+      head.removeEventListener("pointercancel", onUp);
+      setCustomPreset(panelId);
+      savePanelLayout();
+    };
+
+    head.addEventListener("pointermove", onMove);
+    head.addEventListener("pointerup", onUp);
+    head.addEventListener("pointercancel", onUp);
+  });
+}
+
+function initPanelLayout() {
+  if (!mainEl || !panelEls.zona || !panelEls.municipio) return;
+
+  const saved = getSavedLayout();
+  applyDefaultLayout();
+
+  for (const id of ["zona", "municipio"]) {
+    const cfg = saved[id];
+    if (cfg?.preset && posSelects[id]) posSelects[id].value = cfg.preset;
+    if (cfg?.x != null && cfg?.y != null && cfg.preset === "custom") {
+      setPanelPx(id, cfg.x, cfg.y);
+    }
+  }
+
+  if (bothDefault()) {
+    applyDefaultLayout();
+  } else {
+    for (const id of ["municipio", "zona"]) {
+      const preset = posSelects[id]?.value;
+      if (preset === "custom" && saved[id]?.x != null) setPanelPx(id, saved[id].x, saved[id].y);
+      else if (preset && preset !== "default") applyCorner(id, preset);
+    }
+    if (posSelects.zona?.value === "default") applyZonaAboveMunicipio();
+  }
+
+  posSelects.zona?.addEventListener("change", () => onPresetChange("zona"));
+  posSelects.municipio?.addEventListener("change", () => onPresetChange("municipio"));
+  enablePanelDrag("zona");
+  enablePanelDrag("municipio");
+
+  window.addEventListener("resize", () => {
+    if (bothDefault()) applyDefaultLayout();
+    else {
+      for (const id of ["zona", "municipio"]) {
+        const preset = posSelects[id]?.value;
+        if (preset && preset !== "default" && preset !== "custom") applyCorner(id, preset);
+        else if (preset === "custom") {
+          const pos = readPanelPos(id);
+          setPanelPx(
+            id,
+            clamp(pos.left, 0, mainEl.clientWidth - panelEls[id].offsetWidth),
+            clamp(pos.top, 0, mainEl.clientHeight - panelEls[id].offsetHeight),
+          );
+        }
+      }
+      if (posSelects.zona?.value === "default" && posSelects.municipio?.value !== "default") {
+        applyZonaAboveMunicipio();
+      }
+    }
+  });
+}
+
+initPanelLayout();
 loadGeoJSON().catch((e) => console.warn(e));

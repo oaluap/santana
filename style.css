@@ -110,16 +110,73 @@ body {
   padding-top: 56px;
 }
 
-.sum-panels {
-  position: absolute;
-  left: 12px;
-  bottom: 24px;
-  z-index: 900;
+.panel-layout {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: calc(100vh - 96px);
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.panel-layout__label {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.panel-layout__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.panel-layout__name {
+  color: var(--muted);
+}
+
+.panel-layout__select {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(15, 23, 42, 0.65);
+  color: var(--text);
+  font-size: 12px;
+  max-width: 150px;
+}
+
+.sum-box--float {
+  position: absolute;
+  z-index: 900;
+  max-height: min(420px, calc(100vh - 72px));
   overflow-y: auto;
+}
+
+.sum-box--dragging {
+  opacity: 0.92;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  z-index: 950;
+}
+
+.sum-box__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: -12px -14px 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.sum-box__head:active {
+  cursor: grabbing;
+}
+
+.sum-box__grip {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1;
 }
 
 .sum-box {
@@ -138,7 +195,7 @@ body {
   letter-spacing: 0.4px;
   text-transform: uppercase;
   color: var(--muted);
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
 .sum-box__rows {
