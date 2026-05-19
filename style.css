@@ -3,6 +3,7 @@
   --panel: rgba(14, 23, 42, 0.9);
   --text: #e5e7eb;
   --muted: rgba(229, 231, 235, 0.75);
+  --topbar-h: 56px;
 }
 
 html,
@@ -107,7 +108,7 @@ body {
 .main {
   position: relative;
   height: 100%;
-  padding-top: 56px;
+  padding-top: var(--topbar-h);
 }
 
 .panel-layout {
@@ -146,8 +147,17 @@ body {
 .sum-box--float {
   position: absolute;
   z-index: 900;
-  max-height: min(420px, calc(100vh - 72px));
+  max-width: min(200px, calc(100vw - 24px));
+  max-height: min(380px, calc(100vh - var(--topbar-h) - 24px));
   overflow-y: auto;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease;
+}
+
+.sum-box--float.sum-box--ready {
+  opacity: 1;
+  visibility: visible;
 }
 
 .sum-box--dragging {
@@ -234,8 +244,41 @@ body {
 }
 
 .map {
-  height: calc(100vh - 56px);
+  height: calc(100vh - var(--topbar-h));
   width: 100%;
+}
+
+@media (max-width: 720px) {
+  .sum-box--float {
+    max-width: min(168px, calc(50vw - 18px));
+  }
+
+  .sum-box__value {
+    font-size: 17px;
+  }
+
+  .sum-box {
+    min-width: 132px;
+    padding: 10px 12px;
+  }
+
+  .panel-layout__select {
+    max-width: 120px;
+  }
+}
+
+@media (max-width: 420px) {
+  .sum-box--float {
+    max-width: calc(50vw - 14px);
+  }
+
+  .sum-box__label {
+    font-size: 12px;
+  }
+
+  .sum-box__value {
+    font-size: 15px;
+  }
 }
 
 .leaflet-control-layers {
