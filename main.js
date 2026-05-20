@@ -258,9 +258,13 @@ async function loadGeoJSON() {
       if (Object.keys(props).length === 0) return;
 
       l.bindPopup(buildAttrTableHtml(props), {
-        maxWidth: 760,
+        maxWidth: 300,
+        maxHeight: 260,
         className: "attr-popup",
         autoPan: true,
+        autoPanPaddingTopLeft: getPopupPanPadding(),
+        autoPanPaddingBottomRight: L.point(12, 12),
+        keepInView: true,
         closeButton: true,
       });
 
@@ -299,6 +303,12 @@ function escapeHtml(str) {
     .replaceAll("'", "&#039;");
 }
 
+function getPopupPanPadding() {
+  const topbar = document.querySelector(".topbar");
+  const top = topbar ? Math.ceil(topbar.getBoundingClientRect().height) + 16 : 72;
+  return L.point(12, top);
+}
+
 function buildAttrTableHtml(props) {
   const entries = Object.entries(props || {});
   entries.sort(([a], [b]) => a.localeCompare(b, "pt-BR", { numeric: true }));
@@ -307,9 +317,9 @@ function buildAttrTableHtml(props) {
     return `<tr><td class="k">${escapeHtml(k)}</td><td class="v">${escapeHtml(vv)}</td></tr>`;
   });
   return `
-    <div class="attr-tooltip__wrap">
-      <div class="attr-tooltip__title">Atributos</div>
-      <table class="attr-tooltip__table">
+    <div class="attr-popup__wrap">
+      <div class="attr-popup__title">Atributos</div>
+      <table class="attr-popup__table">
         <tbody>
           ${rows.join("")}
         </tbody>
