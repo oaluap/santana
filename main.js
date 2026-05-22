@@ -13,13 +13,13 @@ const municipioList = document.getElementById("municipioList");
 const municipioClearBtn = document.getElementById("municipioClear");
 const zonaStatus = document.getElementById("zonaStatus");
 
-const SUM_FIELDS = ["EleitoresAptos", "1998", "2002", "2006", "2010"];
+const SUM_FIELDS = ["EleitoresAptos", "1998", "2002", "2006", "2020"];
 const SUM_LABELS = {
   EleitoresAptos: "Eleitores aptos",
   1998: "1998",
   2002: "2002",
   2006: "2006",
-  2010: "2010",
+  2020: "2020",
 };
 const numberFmt = new Intl.NumberFormat("pt-BR");
 
