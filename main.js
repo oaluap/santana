@@ -133,7 +133,27 @@ function fillMunicipioDatalist(features) {
   fillDatalist(municipioList, values);
 }
 
+const ELEITORES_APTOS_KEYS = ["EleitoresAptos", "Eleitores_Aptos", "eleitores_aptos", "ELEITORES_APTOS"];
+
+function getEleitoresAptos(feature) {
+  const props = feature?.properties || {};
+  for (const k of ELEITORES_APTOS_KEYS) {
+    if (k in props) {
+      const n = getNumericProp(feature, k);
+      if (n !== null) return n;
+    }
+  }
+  for (const [k, v] of Object.entries(props)) {
+    if (k.toLowerCase().replace(/_/g, "") === "eleitoresaptos") {
+      const n = Number(v);
+      if (Number.isFinite(n)) return n;
+    }
+  }
+  return null;
+}
+
 function getNumericProp(feature, key) {
+  if (key === "EleitoresAptos") return getEleitoresAptos(feature);
   const v = feature?.properties?.[key];
   if (v === null || v === undefined || v === "") return null;
   const n = Number(v);
@@ -166,7 +186,10 @@ function updateSumBoxConfig(config, layers, label) {
   let maxMissing = 0;
   for (const field of SUM_FIELDS) {
     const { total, missing } = sumFieldFromLayers(layers, field);
-    if (config.els[field]) config.els[field].textContent = numberFmt.format(total);
+    if (config.els[field]) {
+      config.els[field].textContent =
+        missing === layers.length ? "—" : numberFmt.format(total);
+    }
     maxMissing = Math.max(maxMissing, missing);
   }
 
