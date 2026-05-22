@@ -135,18 +135,24 @@ function fillMunicipioDatalist(features) {
 
 const ELEITORES_APTOS_KEYS = ["EleitoresAptos", "Eleitores_Aptos", "eleitores_aptos", "ELEITORES_APTOS"];
 
+function parseNumericValue(v) {
+  if (v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
 function getEleitoresAptos(feature) {
   const props = feature?.properties || {};
   for (const k of ELEITORES_APTOS_KEYS) {
     if (k in props) {
-      const n = getNumericProp(feature, k);
+      const n = parseNumericValue(props[k]);
       if (n !== null) return n;
     }
   }
   for (const [k, v] of Object.entries(props)) {
     if (k.toLowerCase().replace(/_/g, "") === "eleitoresaptos") {
-      const n = Number(v);
-      if (Number.isFinite(n)) return n;
+      const n = parseNumericValue(v);
+      if (n !== null) return n;
     }
   }
   return null;
@@ -154,10 +160,7 @@ function getEleitoresAptos(feature) {
 
 function getNumericProp(feature, key) {
   if (key === "EleitoresAptos") return getEleitoresAptos(feature);
-  const v = feature?.properties?.[key];
-  if (v === null || v === undefined || v === "") return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
+  return parseNumericValue(feature?.properties?.[key]);
 }
 
 function sumFieldFromLayers(layers, key) {
@@ -206,12 +209,20 @@ function formatSumStatus(layers) {
   }).join(" · ");
 }
 
+function normalizeFilterValue(value) {
+  return String(value ?? "").trim();
+}
+
 function matchesZona(feature, zona) {
-  return getZona(feature).toLowerCase() === zona.toLowerCase();
+  const z = normalizeFilterValue(zona);
+  if (!z) return false;
+  return getZona(feature).toLowerCase() === z.toLowerCase();
 }
 
 function matchesMunicipio(feature, municipio) {
-  return getMunicipio(feature).toLowerCase() === municipio.toLowerCase();
+  const m = normalizeFilterValue(municipio);
+  if (!m) return false;
+  return getMunicipio(feature).toLowerCase() === m.toLowerCase();
 }
 
 function applyFilters() {
@@ -367,7 +378,7 @@ function buildAttrTableHtml(props) {
 
 zonaForm?.addEventListener("submit", (e) => {
   e.preventDefault();
-  activeZona = String(zonaInput?.value || "").trim();
+  activeZona = normalizeFilterValue(zonaInput?.value);
   applyFilters();
 });
 
@@ -379,7 +390,7 @@ zonaClearBtn?.addEventListener("click", () => {
 
 municipioForm?.addEventListener("submit", (e) => {
   e.preventDefault();
-  activeMunicipio = String(municipioInput?.value || "").trim();
+  activeMunicipio = normalizeFilterValue(municipioInput?.value);
   applyFilters();
 });
 
@@ -699,4 +710,7 @@ function initPanelLayout() {
 window.relayoutPanels = relayoutPanels;
 
 initPanelLayout();
-loadGeoJSON().catch((e) => console.warn(e));
+loadGeoJSON().catch((e) => {
+  console.error(e);
+  setStatus("Erro ao carregar Santana.geojson. Verifique o console.");
+});
