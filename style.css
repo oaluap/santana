@@ -221,6 +221,18 @@ body {
   gap: 12px;
 }
 
+.sum-box__row--highlight .sum-box__label {
+  color: rgba(229, 231, 235, 0.95);
+}
+
+.sum-box__row--highlight .sum-box__value {
+  font-size: 18px;
+}
+
+#sumBoxMunicipio .sum-box__row--highlight .sum-box__value {
+  color: #7dd3fc;
+}
+
 .sum-box__label {
   font-size: 14px;
   font-weight: 600;
