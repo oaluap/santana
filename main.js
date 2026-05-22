@@ -13,17 +13,28 @@ const municipioList = document.getElementById("municipioList");
 const municipioClearBtn = document.getElementById("municipioClear");
 const zonaStatus = document.getElementById("zonaStatus");
 
-const SUM_FIELDS = ["1998", "2002", "2006", "2010"];
+const SUM_FIELDS = ["EleitoresAptos", "1998", "2002", "2006", "2010"];
+const SUM_LABELS = {
+  EleitoresAptos: "Eleitores aptos",
+  1998: "1998",
+  2002: "2002",
+  2006: "2006",
+  2010: "2010",
+};
 const numberFmt = new Intl.NumberFormat("pt-BR");
 
+function sumFieldDomId(prefix, field) {
+  return `${prefix}${field}`;
+}
+
 const zonaSumBox = {
-  els: Object.fromEntries(SUM_FIELDS.map((f) => [f, document.getElementById(`sumZona${f}`)])),
+  els: Object.fromEntries(SUM_FIELDS.map((f) => [f, document.getElementById(sumFieldDomId("sumZona", f))])),
   metaEl: document.getElementById("sumBoxZonaMeta"),
   emptyMsg: "Filtre por Zona para calcular.",
 };
 
 const municipioSumBox = {
-  els: Object.fromEntries(SUM_FIELDS.map((f) => [f, document.getElementById(`sumMun${f}`)])),
+  els: Object.fromEntries(SUM_FIELDS.map((f) => [f, document.getElementById(sumFieldDomId("sumMun", f))])),
   metaEl: document.getElementById("sumBoxMunMeta"),
   emptyMsg: "Filtre por Município para calcular.",
 };
@@ -166,7 +177,10 @@ function updateSumBoxConfig(config, layers, label) {
 }
 
 function formatSumStatus(layers) {
-  return SUM_FIELDS.map((f) => `Σ ${f} = ${numberFmt.format(sumFieldFromLayers(layers, f).total)}`).join(" · ");
+  return SUM_FIELDS.map((f) => {
+    const label = SUM_LABELS[f] || f;
+    return `Σ ${label} = ${numberFmt.format(sumFieldFromLayers(layers, f).total)}`;
+  }).join(" · ");
 }
 
 function matchesZona(feature, zona) {
