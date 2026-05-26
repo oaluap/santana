@@ -27,14 +27,25 @@ function sumFieldDomId(prefix, field) {
   return `${prefix}${field}`;
 }
 
+function buildSumBoxEls(prefix) {
+  const els = {};
+  for (const field of SUM_FIELDS) {
+    const el =
+      document.getElementById(sumFieldDomId(prefix, field)) ||
+      document.querySelector(`[data-sum="${prefix}"][data-field="${field}"]`);
+    els[field] = el;
+  }
+  return els;
+}
+
 const zonaSumBox = {
-  els: Object.fromEntries(SUM_FIELDS.map((f) => [f, document.getElementById(sumFieldDomId("sumZona", f))])),
+  els: buildSumBoxEls("sumZona"),
   metaEl: document.getElementById("sumBoxZonaMeta"),
   emptyMsg: "Filtre por Zona para calcular.",
 };
 
 const municipioSumBox = {
-  els: Object.fromEntries(SUM_FIELDS.map((f) => [f, document.getElementById(sumFieldDomId("sumMun", f))])),
+  els: buildSumBoxEls("sumMun"),
   metaEl: document.getElementById("sumBoxMunMeta"),
   emptyMsg: "Filtre por Município para calcular.",
 };
@@ -158,16 +169,34 @@ function getEleitoresAptos(feature) {
   return null;
 }
 
+function getYearValue(props, year) {
+  const y = String(year);
+  const primary = parseNumericValue(props?.[y]);
+  if (primary !== null) return primary;
+  if (y === "2010") return parseNumericValue(props?.["2020"]);
+  if (y === "2020") return parseNumericValue(props?.["2010"]);
+  return null;
+}
+
 function getNumericProp(feature, key) {
   if (key === "EleitoresAptos") return getEleitoresAptos(feature);
-  return parseNumericValue(feature?.properties?.[key]);
+  const props = feature?.properties || {};
+  if (SUM_FIELDS.includes(key) && /^\d{4}$/.test(String(key))) {
+    return getYearValue(props, key);
+  }
+  return parseNumericValue(props[key]);
+}
+
+function getFeatureFromLayer(layer) {
+  return layer?.feature ?? layer?.__geoFeature ?? null;
 }
 
 function sumFieldFromLayers(layers, key) {
   let total = 0;
   let missing = 0;
   for (const l of layers) {
-    const n = getNumericProp(l.feature, key);
+    const feature = getFeatureFromLayer(l);
+    const n = getNumericProp(feature, key);
     if (n === null) {
       missing += 1;
       continue;
@@ -236,7 +265,8 @@ function applyFilters() {
   const mapMatches = [];
 
   geoLayer.eachLayer((l) => {
-    const f = l.feature;
+    const f = getFeatureFromLayer(l);
+    if (!f) return;
     const zMatch = z && matchesZona(f, z);
     const mMatch = m && matchesMunicipio(f, m);
     const onMap = (!z || zMatch) && (!m || mMatch);
@@ -302,6 +332,7 @@ async function loadGeoJSON() {
   geoLayer = L.geoJSON(geojson, {
     pointToLayer: (feature, latlng) => L.circleMarker(latlng, DEFAULT_MARKER),
     onEachFeature: (feature, l) => {
+      l.__geoFeature = feature;
       const props = feature?.properties || {};
       if (Object.keys(props).length === 0) return;
 
